@@ -1,0 +1,1320 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>E-Commerce System Report</title>
+<style>
+@page { size: A4; margin: 20mm 18mm; }
+@page wide { size: A3 landscape; margin: 10mm; }
+body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.45; color: #111; }
+h1 { font-size: 20pt; margin: 0 0 6px; }
+h2 { font-size: 15pt; border-bottom: 2px solid #1e3a8a; padding-bottom: 3px; margin-top: 26px; color: #1e3a8a; }
+h3 { font-size: 12pt; margin: 16px 0 6px; }
+table { border-collapse: collapse; width: 100%; margin: 8px 0 12px; font-size: 10pt; }
+th, td { border: 1px solid #9ca3af; padding: 4px 7px; text-align: left; vertical-align: top; }
+th { background: #e8eefc; }
+code { font-family: Consolas, monospace; font-size: 9.5pt; background: #f3f4f6; padding: 0 3px; }
+pre { font-family: Consolas, monospace; font-size: 8.3pt; line-height: 1.3; background: #f8fafc;
+       border: 1px solid #d1d5db; padding: 8px; white-space: pre-wrap; }
+pre.code { break-inside: auto; }
+.cover { height: 245mm; display: flex; flex-direction: column; justify-content: center; text-align: center; break-after: page; }
+.cover .title { font-size: 26pt; font-weight: bold; color: #1e3a8a; margin-bottom: 10px; }
+.cover .sub { font-size: 14pt; color: #374151; margin-bottom: 60px; }
+.cover table { width: 60%; margin: 0 auto; font-size: 12pt; }
+.cover td { border: none; padding: 6px; }
+.cover td:first-child { font-weight: bold; text-align: right; width: 45%; }
+.toc li { margin: 2px 0; }
+.uml { page: wide; break-before: page; break-after: page; text-align: center; }
+.uml svg { width: 100%; height: auto; max-height: 265mm; }
+.annex { break-before: page; }
+.newpage { break-before: page; }
+</style></head><body>
+
+<section class="cover">
+  <div class="title">Design and Implementation of a<br>Console-Based E-Commerce System using Java</div>
+  <div class="sub">Assignment 1 &mdash; Report</div>
+  <table>
+    <tr><td>Student name:</td><td>Madiyar Seilkhan</td></tr>
+    <tr><td>Course:</td><td>ICT</td></tr>
+    <tr><td>Date of submission:</td><td>29 October 2026</td></tr>
+  </table>
+</section>
+
+<h2>Contents</h2>
+<ol class="toc">
+  <li>Objective</li>
+  <li>Requirement Analysis</li>
+  <li>Object Modeling</li>
+  <li>UML Class Diagram</li>
+  <li>Design and Implementation Notes</li>
+  <li>How to Run and Sample Session</li>
+  <li>Conclusion</li>
+  <li>Annex A &mdash; Source Code</li>
+</ol>
+
+<h2>1. Objective</h2>
+<p>The goal of this project is to design and implement a simple console-based e-commerce system in Java.
+The system manages users (customers and employees), products (books, electronics and clothing) and orders.
+Customers can browse products, fill a shopping cart and place orders; employees can add products and users,
+restock products and view all orders.</p>
+<p>The project is used to practise the main principles of object-oriented programming:
+class design with attributes and methods, <b>encapsulation</b>, <b>inheritance</b>, <b>abstraction</b> and
+<b>polymorphism</b>, together with the Java Collections Framework (<code>ArrayList</code>) and console
+input with <code>Scanner</code>.</p>
+
+<h2>2. Requirement Analysis</h2>
+<h3>2.1 Functional requirements</h3>
+<table>
+<tr><th>ID</th><th>Requirement</th><th>Who</th><th>Implemented in</th></tr>
+<tr><td>FR1</td><td>Log in with email and password; show a menu that depends on the role</td><td>All users</td><td><code>Store.login()</code>, <code>ConsoleApp.login()</code></td></tr>
+<tr><td>FR2</td><td>Register a new customer account</td><td>Guest</td><td><code>ConsoleApp.registerCustomer()</code>, <code>Store.addUser()</code></td></tr>
+<tr><td>FR3</td><td>List available products with category-specific details</td><td>All</td><td><code>Product.displayInfo()</code>, <code>ConsoleApp.listProducts()</code></td></tr>
+<tr><td>FR4</td><td>Add products (Book, Electronics, Clothing) to the system</td><td>Employee</td><td><code>ConsoleApp.addProduct()</code>, <code>Store.addProduct()</code></td></tr>
+<tr><td>FR5</td><td>Add users (Customer or Employee) and list all users</td><td>Employee</td><td><code>ConsoleApp.addUser()</code>, <code>ConsoleApp.listUsers()</code></td></tr>
+<tr><td>FR6</td><td>Add products to a cart and view the cart</td><td>Customer</td><td><code>ConsoleApp.addToCart()</code>, <code>viewCart()</code></td></tr>
+<tr><td>FR7</td><td>Place an order from the cart; stock decreases; a receipt is printed</td><td>Customer</td><td><code>Store.placeOrder()</code>, <code>Order.printReceipt()</code></td></tr>
+<tr><td>FR8</td><td>View own orders (customer) / all orders (employee)</td><td>Customer, Employee</td><td><code>Store.getOrdersByCustomer()</code>, <code>Store.getOrders()</code></td></tr>
+<tr><td>FR9</td><td>Restock a product</td><td>Employee</td><td><code>Product.increaseStock()</code></td></tr>
+</table>
+
+<h3>2.2 Non-functional requirements</h3>
+<ul>
+  <li>All attributes are <code>private</code> and accessed through getters/setters (encapsulation).</li>
+  <li>Data is kept in memory in <code>ArrayList</code> collections.</li>
+  <li>Invalid input (letters instead of numbers, empty values, unknown IDs, too large quantities) must not crash the program.</li>
+  <li>Code is organised in packages and uses meaningful names.</li>
+</ul>
+
+<h3>2.3 Identifying objects, attributes and methods</h3>
+<p>Classes were found by taking the <b>nouns</b> from the requirements (user, customer, employee, product, book,
+electronics, clothing, order) and methods from the <b>verbs</b> (add, list, place order, view, print receipt).</p>
+<table>
+<tr><th>Object</th><th>Attributes</th><th>Main methods</th></tr>
+<tr><td>User</td><td>userId, name, email, password, role</td><td>checkPassword(), displayInfo(), getters/setters</td></tr>
+<tr><td>Customer</td><td>+ shippingAddress</td><td>getShippingAddress(), setShippingAddress()</td></tr>
+<tr><td>Employee</td><td>+ position, salary</td><td>getPosition(), setSalary()</td></tr>
+<tr><td>Product</td><td>id, name, price, stockQuantity</td><td>displayInfo(), isInStock(), reduceStock(), increaseStock()</td></tr>
+<tr><td>Book</td><td>+ author, pages</td><td>getCategory(), getDetails()</td></tr>
+<tr><td>Electronics</td><td>+ brand, warrantyMonths</td><td>getCategory(), getDetails()</td></tr>
+<tr><td>Clothing</td><td>+ size, color</td><td>getCategory(), getDetails()</td></tr>
+<tr><td>Order</td><td>orderId, customer, items, totalAmount, orderDate</td><td>addItem(), calculateTotal(), printReceipt()</td></tr>
+<tr><td>OrderItem</td><td>product, quantity, unitPrice</td><td>getSubtotal()</td></tr>
+<tr><td>Store</td><td>users, products, orders (ArrayLists), ID counters</td><td>addUser(), addProduct(), login(), placeOrder(), find...()</td></tr>
+</table>
+<p><code>OrderItem</code> and <code>Store</code> are not named directly in the requirements; they were added during design
+(see section 5.5).</p>
+
+<h2>3. Object Modeling</h2>
+<h3>3.1 Classes and packages</h3>
+<table>
+<tr><th>Package</th><th>Classes</th><th>Responsibility</th></tr>
+<tr><td><code>ecommerce</code></td><td>Main</td><td>Program entry point, loads demo data</td></tr>
+<tr><td><code>ecommerce.model.user</code></td><td>User (abstract), Customer, Employee</td><td>People who use the system</td></tr>
+<tr><td><code>ecommerce.model.product</code></td><td>Product (abstract), Book, Electronics, Clothing</td><td>Items that are sold</td></tr>
+<tr><td><code>ecommerce.model.order</code></td><td>Order, OrderItem</td><td>Purchases</td></tr>
+<tr><td><code>ecommerce.service</code></td><td>Store</td><td>Stores all data in ArrayLists and applies business rules</td></tr>
+<tr><td><code>ecommerce.ui</code></td><td>ConsoleApp, InputHelper</td><td>Console menus and safe input with Scanner</td></tr>
+</table>
+
+<h3>3.2 Relationships</h3>
+<table>
+<tr><th>Relationship</th><th>Type</th><th>Multiplicity</th><th>Meaning</th></tr>
+<tr><td>Customer, Employee &rarr; User</td><td>Inheritance (generalization)</td><td>&ndash;</td><td>A customer <i>is a</i> user; an employee <i>is a</i> user</td></tr>
+<tr><td>Book, Electronics, Clothing &rarr; Product</td><td>Inheritance (generalization)</td><td>&ndash;</td><td>Each is a kind of product</td></tr>
+<tr><td>Order &rarr; Customer</td><td>Association</td><td>0..* orders &ndash; 1 customer</td><td>Every order belongs to exactly one customer</td></tr>
+<tr><td>Order &#9670;&ndash; OrderItem</td><td>Composition</td><td>1 &ndash; 1..*</td><td>Order items exist only as part of an order</td></tr>
+<tr><td>OrderItem &rarr; Product</td><td>Association</td><td>0..* &ndash; 1</td><td>Each line refers to one product</td></tr>
+<tr><td>Store &#9671;&ndash; User / Product / Order</td><td>Aggregation</td><td>1 &ndash; 0..*</td><td>The store keeps collections of all users, products and orders</td></tr>
+<tr><td>ConsoleApp &rarr; Store, InputHelper</td><td>Association</td><td>1 &ndash; 1</td><td>The UI uses the store for data and InputHelper for reading input</td></tr>
+<tr><td>Main ..&gt; ConsoleApp, Store</td><td>Dependency &laquo;create&raquo;</td><td>&ndash;</td><td>Main creates the objects and starts the app</td></tr>
+</table>
+
+<section class="uml">
+<h2 style="text-align:left">4. UML Class Diagram</h2>
+<svg xmlns="http://www.w3.org/2000/svg" width="2450" height="1208" viewBox="0 0 2450 1208"><style>
+.box{fill:#ffffff;stroke:#1f2937;stroke-width:1.4}
+.head{fill:#e8eefc;stroke:#1f2937;stroke-width:1.4}
+.sep{stroke:#1f2937;stroke-width:1}
+text{font-family:Consolas,'Courier New',monospace;fill:#111827}
+.cname{font-size:15px;font-weight:bold;font-family:Arial,Helvetica,sans-serif}
+.abs{font-style:italic}
+.stereo{font-size:11px;font-family:Arial,Helvetica,sans-serif}
+.pkg{font-size:10px;fill:#4b5563;font-family:Arial,Helvetica,sans-serif}
+.mem{font-size:12px}
+.static{text-decoration:underline}
+.rel{fill:none;stroke:#1f2937;stroke-width:1.3}
+.dash{fill:none;stroke:#1f2937;stroke-width:1.3;stroke-dasharray:6 4}
+.tri{fill:#ffffff;stroke:#1f2937;stroke-width:1.3}
+.dfill{fill:#1f2937;stroke:#1f2937}
+.dhollow{fill:#ffffff;stroke:#1f2937;stroke-width:1.3}
+.lbl{font-size:12px;font-family:Arial,Helvetica,sans-serif;fill:#1d4ed8}
+</style><rect width="100%" height="100%" fill="#ffffff"/><rect x="309.5" y="60.0" width="339" height="170" class="box"/><rect x="309.5" y="60.0" width="339" height="38" class="head"/><text x="479.0" y="76.0" class="cname" text-anchor="middle">InputHelper</text><text x="479.0" y="91.0" class="pkg" text-anchor="middle">ecommerce.ui</text><line x1="309.5" y1="98" x2="648.5" y2="98" class="sep"/><text x="319.5" y="116.0" class="mem">-scanner:Scanner</text><line x1="309.5" y1="124" x2="648.5" y2="124" class="sep"/><text x="319.5" y="142.0" class="mem">+InputHelper(scanner:Scanner)</text><text x="319.5" y="158.0" class="mem">+readLine(prompt:String):String</text><text x="319.5" y="174.0" class="mem">+readNonEmpty(prompt:String):String</text><text x="319.5" y="190.0" class="mem">+readInt(prompt:String):int</text><text x="319.5" y="206.0" class="mem">+readPositiveInt(prompt:String):int</text><text x="319.5" y="222.0" class="mem">+readNonNegativeDouble(prompt:String):double</text><rect x="768.5" y="60.0" width="433" height="346" class="box"/><rect x="768.5" y="60.0" width="433" height="38" class="head"/><text x="985.0" y="76.0" class="cname" text-anchor="middle">ConsoleApp</text><text x="985.0" y="91.0" class="pkg" text-anchor="middle">ecommerce.ui</text><line x1="768.5" y1="98" x2="1201.5" y2="98" class="sep"/><text x="778.5" y="116.0" class="mem">-store:Store</text><text x="778.5" y="132.0" class="mem">-input:InputHelper</text><line x1="768.5" y1="140" x2="1201.5" y2="140" class="sep"/><text x="778.5" y="158.0" class="mem">+ConsoleApp(store:Store, input:InputHelper)</text><text x="778.5" y="174.0" class="mem">+run():void</text><text x="778.5" y="190.0" class="mem">-login():void</text><text x="778.5" y="206.0" class="mem">-registerCustomer():void</text><text x="778.5" y="222.0" class="mem">-customerMenu(customer:Customer):void</text><text x="778.5" y="238.0" class="mem">-addToCart(cart:List&lt;OrderItem&gt;):void</text><text x="778.5" y="254.0" class="mem">-viewCart(cart:List&lt;OrderItem&gt;):void</text><text x="778.5" y="270.0" class="mem">-placeOrder(customer:Customer, cart:List&lt;OrderItem&gt;):void</text><text x="778.5" y="286.0" class="mem">-employeeMenu(employee:Employee):void</text><text x="778.5" y="302.0" class="mem">-addProduct():void</text><text x="778.5" y="318.0" class="mem">-restockProduct():void</text><text x="778.5" y="334.0" class="mem">-addUser():void</text><text x="778.5" y="350.0" class="mem">-readNewCustomer():Customer</text><text x="778.5" y="366.0" class="mem">-listProducts():void</text><text x="778.5" y="382.0" class="mem">-listUsers():void</text><text x="778.5" y="398.0" class="mem">-printOrders(orders:List&lt;Order&gt;):void</text><rect x="1321.5" y="150.0" width="259" height="94" class="box"/><rect x="1321.5" y="150.0" width="259" height="38" class="head"/><text x="1451.0" y="166.0" class="cname" text-anchor="middle">Main</text><text x="1451.0" y="181.0" class="pkg" text-anchor="middle">ecommerce</text><line x1="1321.5" y1="188" x2="1580.5" y2="188" class="sep"/><line x1="1321.5" y1="202" x2="1580.5" y2="202" class="sep"/><text x="1331.5" y="220.0" class="mem static">+main(args:String[]):void</text><text x="1331.5" y="236.0" class="mem static">-loadSampleData(store:Store):void</text><rect x="1700.5" y="60.0" width="440" height="346" class="box"/><rect x="1700.5" y="60.0" width="440" height="38" class="head"/><text x="1920.5" y="76.0" class="cname" text-anchor="middle">Store</text><text x="1920.5" y="91.0" class="pkg" text-anchor="middle">ecommerce.service</text><line x1="1700.5" y1="98" x2="2140.5" y2="98" class="sep"/><text x="1710.5" y="116.0" class="mem">-users:ArrayList&lt;User&gt;</text><text x="1710.5" y="132.0" class="mem">-products:ArrayList&lt;Product&gt;</text><text x="1710.5" y="148.0" class="mem">-orders:ArrayList&lt;Order&gt;</text><text x="1710.5" y="164.0" class="mem">-nextUserId:int</text><text x="1710.5" y="180.0" class="mem">-nextProductId:int</text><text x="1710.5" y="196.0" class="mem">-nextOrderId:int</text><line x1="1700.5" y1="204" x2="2140.5" y2="204" class="sep"/><text x="1710.5" y="222.0" class="mem">+generateUserId():int</text><text x="1710.5" y="238.0" class="mem">+generateProductId():int</text><text x="1710.5" y="254.0" class="mem">+addUser(user:User):void</text><text x="1710.5" y="270.0" class="mem">+findUserByEmail(email:String):User</text><text x="1710.5" y="286.0" class="mem">+login(email:String, password:String):User</text><text x="1710.5" y="302.0" class="mem">+getUsers():List&lt;User&gt;</text><text x="1710.5" y="318.0" class="mem">+addProduct(product:Product):void</text><text x="1710.5" y="334.0" class="mem">+findProductById(id:int):Product</text><text x="1710.5" y="350.0" class="mem">+getProducts():List&lt;Product&gt;</text><text x="1710.5" y="366.0" class="mem">+placeOrder(customer:Customer, cart:List&lt;OrderItem&gt;):Order</text><text x="1710.5" y="382.0" class="mem">+getOrders():List&lt;Order&gt;</text><text x="1710.5" y="398.0" class="mem">+getOrdersByCustomer(customer:Customer):List&lt;Order&gt;</text><rect x="309.5" y="526.0" width="324" height="328" class="box"/><rect x="309.5" y="526.0" width="324" height="52" class="head"/><text x="471.5" y="542.0" class="stereo" text-anchor="middle">«abstract»</text><text x="471.5" y="558.0" class="cname abs" text-anchor="middle">User</text><text x="471.5" y="573.0" class="pkg" text-anchor="middle">ecommerce.model.user</text><line x1="309.5" y1="578" x2="633.5" y2="578" class="sep"/><text x="319.5" y="596.0" class="mem">-userId:int</text><text x="319.5" y="612.0" class="mem">-name:String</text><text x="319.5" y="628.0" class="mem">-email:String</text><text x="319.5" y="644.0" class="mem">-password:String</text><text x="319.5" y="660.0" class="mem">-role:String</text><line x1="309.5" y1="668" x2="633.5" y2="668" class="sep"/><text x="319.5" y="686.0" class="mem">#User(userId, name, email, password, role)</text><text x="319.5" y="702.0" class="mem">+checkPassword(candidate:String):boolean</text><text x="319.5" y="718.0" class="mem">+displayInfo():void</text><text x="319.5" y="734.0" class="mem abs">#getExtraInfo():String {abstract}</text><text x="319.5" y="750.0" class="mem">+getUserId():int</text><text x="319.5" y="766.0" class="mem">+getName():String</text><text x="319.5" y="782.0" class="mem">+setName(name:String):void</text><text x="319.5" y="798.0" class="mem">+getEmail():String</text><text x="319.5" y="814.0" class="mem">+setEmail(email:String):void</text><text x="319.5" y="830.0" class="mem">+setPassword(password:String):void</text><text x="319.5" y="846.0" class="mem">+getRole():String</text><rect x="743.5" y="526.0" width="295" height="298" class="box"/><rect x="743.5" y="526.0" width="295" height="38" class="head"/><text x="891.0" y="542.0" class="cname" text-anchor="middle">Order</text><text x="891.0" y="557.0" class="pkg" text-anchor="middle">ecommerce.model.order</text><line x1="743.5" y1="564" x2="1038.5" y2="564" class="sep"/><text x="753.5" y="582.0" class="mem static">-DATE_FORMAT:DateTimeFormatter</text><text x="753.5" y="598.0" class="mem">-orderId:int</text><text x="753.5" y="614.0" class="mem">-customer:Customer</text><text x="753.5" y="630.0" class="mem">-items:ArrayList&lt;OrderItem&gt;</text><text x="753.5" y="646.0" class="mem">-totalAmount:double</text><text x="753.5" y="662.0" class="mem">-orderDate:LocalDateTime</text><line x1="743.5" y1="670" x2="1038.5" y2="670" class="sep"/><text x="753.5" y="688.0" class="mem">+Order(orderId:int, customer:Customer)</text><text x="753.5" y="704.0" class="mem">+addItem(item:OrderItem):void</text><text x="753.5" y="720.0" class="mem">+calculateTotal():double</text><text x="753.5" y="736.0" class="mem">+printReceipt():void</text><text x="753.5" y="752.0" class="mem">+getOrderId():int</text><text x="753.5" y="768.0" class="mem">+getCustomer():Customer</text><text x="753.5" y="784.0" class="mem">+getItems():List&lt;OrderItem&gt;</text><text x="753.5" y="800.0" class="mem">+getTotalAmount():double</text><text x="753.5" y="816.0" class="mem">+getOrderDate():LocalDateTime</text><rect x="1148.5" y="526.0" width="317" height="202" class="box"/><rect x="1148.5" y="526.0" width="317" height="38" class="head"/><text x="1307.0" y="542.0" class="cname" text-anchor="middle">OrderItem</text><text x="1307.0" y="557.0" class="pkg" text-anchor="middle">ecommerce.model.order</text><line x1="1148.5" y1="564" x2="1465.5" y2="564" class="sep"/><text x="1158.5" y="582.0" class="mem">-product:Product</text><text x="1158.5" y="598.0" class="mem">-quantity:int</text><text x="1158.5" y="614.0" class="mem">-unitPrice:double</text><line x1="1148.5" y1="622" x2="1465.5" y2="622" class="sep"/><text x="1158.5" y="640.0" class="mem">+OrderItem(product:Product, quantity:int)</text><text x="1158.5" y="656.0" class="mem">+getSubtotal():double</text><text x="1158.5" y="672.0" class="mem">+getProduct():Product</text><text x="1158.5" y="688.0" class="mem">+getQuantity():int</text><text x="1158.5" y="704.0" class="mem">+setQuantity(quantity:int):void</text><text x="1158.5" y="720.0" class="mem">+getUnitPrice():double</text><rect x="1575.5" y="526.0" width="317" height="360" class="box"/><rect x="1575.5" y="526.0" width="317" height="52" class="head"/><text x="1734.0" y="542.0" class="stereo" text-anchor="middle">«abstract»</text><text x="1734.0" y="558.0" class="cname abs" text-anchor="middle">Product</text><text x="1734.0" y="573.0" class="pkg" text-anchor="middle">ecommerce.model.product</text><line x1="1575.5" y1="578" x2="1892.5" y2="578" class="sep"/><text x="1585.5" y="596.0" class="mem">-id:int</text><text x="1585.5" y="612.0" class="mem">-name:String</text><text x="1585.5" y="628.0" class="mem">-price:double</text><text x="1585.5" y="644.0" class="mem">-stockQuantity:int</text><line x1="1575.5" y1="652" x2="1892.5" y2="652" class="sep"/><text x="1585.5" y="670.0" class="mem">#Product(id, name, price, stockQuantity)</text><text x="1585.5" y="686.0" class="mem">+displayInfo():void</text><text x="1585.5" y="702.0" class="mem abs">+getCategory():String {abstract}</text><text x="1585.5" y="718.0" class="mem abs">#getDetails():String {abstract}</text><text x="1585.5" y="734.0" class="mem">+isInStock(quantity:int):boolean</text><text x="1585.5" y="750.0" class="mem">+reduceStock(quantity:int):void</text><text x="1585.5" y="766.0" class="mem">+increaseStock(quantity:int):void</text><text x="1585.5" y="782.0" class="mem">+getId():int</text><text x="1585.5" y="798.0" class="mem">+getName():String</text><text x="1585.5" y="814.0" class="mem">+setName(name:String):void</text><text x="1585.5" y="830.0" class="mem">+getPrice():double</text><text x="1585.5" y="846.0" class="mem">+setPrice(price:double):void</text><text x="1585.5" y="862.0" class="mem">+getStockQuantity():int</text><text x="1585.5" y="878.0" class="mem">+setStockQuantity(stockQuantity:int):void</text><rect x="20.0" y="976.0" width="440" height="186" class="box"/><rect x="20.0" y="976.0" width="440" height="38" class="head"/><text x="240.0" y="992.0" class="cname" text-anchor="middle">Employee</text><text x="240.0" y="1007.0" class="pkg" text-anchor="middle">ecommerce.model.user</text><line x1="20.0" y1="1014" x2="460.0" y2="1014" class="sep"/><text x="30.0" y="1032.0" class="mem">-position:String</text><text x="30.0" y="1048.0" class="mem">-salary:double</text><line x1="20.0" y1="1056" x2="460.0" y2="1056" class="sep"/><text x="30.0" y="1074.0" class="mem">+Employee(userId, name, email, password, position, salary)</text><text x="30.0" y="1090.0" class="mem">#getExtraInfo():String</text><text x="30.0" y="1106.0" class="mem">+getPosition():String</text><text x="30.0" y="1122.0" class="mem">+setPosition(position:String):void</text><text x="30.0" y="1138.0" class="mem">+getSalary():double</text><text x="30.0" y="1154.0" class="mem">+setSalary(salary:double):void</text><rect x="490.0" y="976.0" width="433" height="138" class="box"/><rect x="490.0" y="976.0" width="433" height="38" class="head"/><text x="706.5" y="992.0" class="cname" text-anchor="middle">Customer</text><text x="706.5" y="1007.0" class="pkg" text-anchor="middle">ecommerce.model.user</text><line x1="490.0" y1="1014" x2="923.0" y2="1014" class="sep"/><text x="500.0" y="1032.0" class="mem">-shippingAddress:String</text><line x1="490.0" y1="1040" x2="923.0" y2="1040" class="sep"/><text x="500.0" y="1058.0" class="mem">+Customer(userId, name, email, password, shippingAddress)</text><text x="500.0" y="1074.0" class="mem">#getExtraInfo():String</text><text x="500.0" y="1090.0" class="mem">+getShippingAddress():String</text><text x="500.0" y="1106.0" class="mem">+setShippingAddress(address:String):void</text><rect x="1047.5" y="976.0" width="397" height="202" class="box"/><rect x="1047.5" y="976.0" width="397" height="38" class="head"/><text x="1246.0" y="992.0" class="cname" text-anchor="middle">Book</text><text x="1246.0" y="1007.0" class="pkg" text-anchor="middle">ecommerce.model.product</text><line x1="1047.5" y1="1014" x2="1444.5" y2="1014" class="sep"/><text x="1057.5" y="1032.0" class="mem">-author:String</text><text x="1057.5" y="1048.0" class="mem">-pages:int</text><line x1="1047.5" y1="1056" x2="1444.5" y2="1056" class="sep"/><text x="1057.5" y="1074.0" class="mem">+Book(id, name, price, stockQuantity, author, pages)</text><text x="1057.5" y="1090.0" class="mem">+getCategory():String</text><text x="1057.5" y="1106.0" class="mem">#getDetails():String</text><text x="1057.5" y="1122.0" class="mem">+getAuthor():String</text><text x="1057.5" y="1138.0" class="mem">+setAuthor(author:String):void</text><text x="1057.5" y="1154.0" class="mem">+getPages():int</text><text x="1057.5" y="1170.0" class="mem">+setPages(pages:int):void</text><rect x="1474.5" y="976.0" width="505" height="202" class="box"/><rect x="1474.5" y="976.0" width="505" height="38" class="head"/><text x="1727.0" y="992.0" class="cname" text-anchor="middle">Electronics</text><text x="1727.0" y="1007.0" class="pkg" text-anchor="middle">ecommerce.model.product</text><line x1="1474.5" y1="1014" x2="1979.5" y2="1014" class="sep"/><text x="1484.5" y="1032.0" class="mem">-brand:String</text><text x="1484.5" y="1048.0" class="mem">-warrantyMonths:int</text><line x1="1474.5" y1="1056" x2="1979.5" y2="1056" class="sep"/><text x="1484.5" y="1074.0" class="mem">+Electronics(id, name, price, stockQuantity, brand, warrantyMonths)</text><text x="1484.5" y="1090.0" class="mem">+getCategory():String</text><text x="1484.5" y="1106.0" class="mem">#getDetails():String</text><text x="1484.5" y="1122.0" class="mem">+getBrand():String</text><text x="1484.5" y="1138.0" class="mem">+setBrand(brand:String):void</text><text x="1484.5" y="1154.0" class="mem">+getWarrantyMonths():int</text><text x="1484.5" y="1170.0" class="mem">+setWarrantyMonths(months:int):void</text><rect x="2009.5" y="976.0" width="411" height="202" class="box"/><rect x="2009.5" y="976.0" width="411" height="38" class="head"/><text x="2215.0" y="992.0" class="cname" text-anchor="middle">Clothing</text><text x="2215.0" y="1007.0" class="pkg" text-anchor="middle">ecommerce.model.product</text><line x1="2009.5" y1="1014" x2="2420.5" y2="1014" class="sep"/><text x="2019.5" y="1032.0" class="mem">-size:String</text><text x="2019.5" y="1048.0" class="mem">-color:String</text><line x1="2009.5" y1="1056" x2="2420.5" y2="1056" class="sep"/><text x="2019.5" y="1074.0" class="mem">+Clothing(id, name, price, stockQuantity, size, color)</text><text x="2019.5" y="1090.0" class="mem">+getCategory():String</text><text x="2019.5" y="1106.0" class="mem">#getDetails():String</text><text x="2019.5" y="1122.0" class="mem">+getSize():String</text><text x="2019.5" y="1138.0" class="mem">+setSize(size:String):void</text><text x="2019.5" y="1154.0" class="mem">+getColor():String</text><text x="2019.5" y="1170.0" class="mem">+setColor(color:String):void</text><path d="M471.5,854 L462.5,869 L480.5,869 Z" class="tri"/><path d="M471.5,869.0 L471.5,915.0" class="rel"/><path d="M240.0,915.0 L706.5,915.0" class="rel"/><path d="M240.0,915.0 L240.0,976.0" class="rel"/><path d="M706.5,915.0 L706.5,976.0" class="rel"/><path d="M1734.0,886 L1725.0,901 L1743.0,901 Z" class="tri"/><path d="M1734.0,901.0 L1734.0,931.0" class="rel"/><path d="M1246.0,931.0 L2215.0,931.0" class="rel"/><path d="M1246.0,931.0 L1246.0,976.0" class="rel"/><path d="M1727.0,931.0 L1727.0,976.0" class="rel"/><path d="M2215.0,931.0 L2215.0,976.0" class="rel"/><path d="M1038.5,596.0 L1047.5,602.0 L1056.5,596.0 L1047.5,590.0 Z" class="dfill"/><path d="M1056.5,596.0 L1148.5,596.0" class="rel"/><text x="1060.5" y="590.0" class="lbl" text-anchor="start">1</text><text x="1142.5" y="590.0" class="lbl" text-anchor="end">1..*</text><text x="1142.5" y="612.0" class="lbl" text-anchor="end">items</text><path d="M1465.5,566.0 L1575.5,566.0" class="rel"/><path d="M1563.5,560.0 L1575.5,566.0 L1563.5,572.0" class="rel"/><text x="1471.5" y="560.0" class="lbl" text-anchor="start">0..*</text><text x="1569.5" y="560.0" class="lbl" text-anchor="end">1</text><text x="1569.5" y="582.0" class="lbl" text-anchor="end">product</text><path d="M893.0,824.0 L893.0,976.0" class="rel"/><path d="M899.0,964.0 L893.0,976.0 L887.0,964.0" class="rel"/><text x="899.0" y="840.0" class="lbl" text-anchor="start">0..*</text><text x="899.0" y="968.0" class="lbl" text-anchor="start">1  customer</text><path d="M1920.5,406.0 L1914.5,415.0 L1920.5,424.0 L1926.5,415.0 Z" class="dhollow"/><path d="M1920.5,424.0 L1920.5,492.0 L1734.0,492.0 L1734.0,526.0" class="rel"/><path d="M1740.0,514.0 L1734.0,526.0 L1728.0,514.0" class="rel"/><text x="1740.0" y="518.0" class="lbl" text-anchor="start">0..*  products</text><text x="1926.5" y="436.0" class="lbl" text-anchor="start">1</text><path d="M1832.5,406.0 L1826.5,415.0 L1832.5,424.0 L1838.5,415.0 Z" class="dhollow"/><path d="M1832.5,424.0 L1832.5,464.0 L891.0,464.0 L891.0,526.0" class="rel"/><path d="M897.0,514.0 L891.0,526.0 L885.0,514.0" class="rel"/><text x="897.0" y="518.0" class="lbl" text-anchor="start">0..*  orders</text><text x="1838.5" y="436.0" class="lbl" text-anchor="start">1</text><path d="M1753.3,406.0 L1747.3,415.0 L1753.3,424.0 L1759.3,415.0 Z" class="dhollow"/><path d="M1753.3,424.0 L1753.3,436.0 L471.5,436.0 L471.5,526.0" class="rel"/><path d="M477.5,514.0 L471.5,526.0 L465.5,514.0" class="rel"/><text x="477.5" y="518.0" class="lbl" text-anchor="start">0..*  users</text><text x="1759.3" y="436.0" class="lbl" text-anchor="start">1</text><path d="M768.5,90.0 L648.5,90.0" class="rel"/><path d="M660.5,96.0 L648.5,90.0 L660.5,84.0" class="rel"/><text x="654.5" y="84.0" class="lbl" text-anchor="start">1  input</text><path d="M1161.5,60.0 L1161.5,30.0 L1740.5,30.0 L1740.5,60.0" class="rel"/><path d="M1746.5,48.0 L1740.5,60.0 L1734.5,48.0" class="rel"/><text x="1746.5" y="52.0" class="lbl" text-anchor="start">1  store</text><path d="M1321.5,180.0 L1201.5,180.0" class="dash"/><path d="M1213.5,186.0 L1201.5,180.0 L1213.5,174.0" class="rel"/><text x="1261.5" y="174.0" class="lbl" text-anchor="middle">«create»</text><path d="M1580.5,180.0 L1700.5,180.0" class="dash"/><path d="M1688.5,174.0 L1700.5,180.0 L1688.5,186.0" class="rel"/><text x="1640.5" y="174.0" class="lbl" text-anchor="middle">«create»</text></svg>
+<p style="font-size:9pt;text-align:left">Notation: <b>-</b> private, <b>+</b> public, <b>#</b> protected; <i>italic</i> = abstract class/method;
+<u>underlined</u> = static. Hollow triangle = inheritance, filled diamond = composition, hollow diamond = aggregation,
+open arrow = navigable association, dashed arrow = dependency. The diagram is also provided as <code>docs/uml-class-diagram.svg</code>/<code>.png</code>.</p>
+</section>
+
+<h2>5. Design and Implementation Notes</h2>
+<h3>5.1 Encapsulation</h3>
+<p>Every attribute in every class is <code>private</code>. Other classes access data only through public getters and setters.
+Setters are used to protect the object's state, for example <code>Product.setPrice()</code> and <code>setStockQuantity()</code>
+reject negative values, and <code>Employee.setSalary()</code> rejects a negative salary. The password has a setter but
+<b>no getter</b>: it can only be checked with <code>checkPassword()</code>, so it is never exposed. Methods that return lists
+(<code>Store.getProducts()</code>, <code>Order.getItems()</code>, ...) return a <b>copy</b> of the internal ArrayList, so code outside
+the class cannot add or remove elements behind the class's back. Stock can only change through
+<code>reduceStock()</code> / <code>increaseStock()</code>, which check the values.</p>
+
+<h3>5.2 Inheritance and abstraction</h3>
+<p><code>User</code> and <code>Product</code> are declared <code>abstract</code> because a "plain" user or product never exists &mdash;
+there is always a concrete type. The common attributes (id, name, price, stock...) and common behaviour
+(<code>displayInfo()</code>, <code>isInStock()</code>, <code>checkPassword()</code>) are written once in the superclass and reused by all
+subclasses. Subclass constructors call <code>super(...)</code> to initialise the inherited private fields. The role of a user
+("CUSTOMER" / "EMPLOYEE") is set automatically by the subclass constructor, so it can never be inconsistent with the
+real type.</p>
+
+<h3>5.3 Polymorphism</h3>
+<p><code>Product.displayInfo()</code> prints the common fields and then calls the abstract methods <code>getCategory()</code> and
+<code>getDetails()</code>. Each subclass overrides them (<code>@Override</code>), so when the store loops over an
+<code>ArrayList&lt;Product&gt;</code> and calls <code>displayInfo()</code>, a book shows its author, electronics show brand and
+warranty, and clothing shows size and color. The same idea is used in <code>User.displayInfo()</code> with
+<code>getExtraInfo()</code>. After login, <code>instanceof</code> is used to decide whether the customer menu or the employee
+menu is shown.</p>
+
+<h3>5.4 Collections</h3>
+<p><code>Store</code> keeps three collections: <code>ArrayList&lt;User&gt;</code>, <code>ArrayList&lt;Product&gt;</code> and
+<code>ArrayList&lt;Order&gt;</code>. Because the lists use the superclass types, one list can hold customers and employees
+(or books, electronics and clothing) together. <code>Order</code> keeps an <code>ArrayList&lt;OrderItem&gt;</code>, and the
+customer's shopping cart is a <code>List&lt;OrderItem&gt;</code> that lives only during the customer's session.</p>
+
+<h3>5.5 Design decisions</h3>
+<ul>
+<li><b>OrderItem class.</b> The requirements say an order contains a "list of products". A plain
+<code>ArrayList&lt;Product&gt;</code> cannot store <i>how many</i> units were bought, and if the product's price changed later,
+old receipts would change too. <code>OrderItem</code> stores the product, the quantity and the unit price at the time of purchase.</li>
+<li><b>Store class (service layer).</b> All data and business rules are in <code>Store</code>; the menu code in
+<code>ConsoleApp</code> only reads input and prints output. This separation makes the code easier to read and would let us
+replace the console with a GUI without changing the model.</li>
+<li><b>Safe order placement.</b> <code>Store.placeOrder()</code> first checks the stock of <i>every</i> cart item and only then
+reduces stock and creates the order, so an order is either completed fully or not at all.</li>
+<li><b>Total amount consistency.</b> <code>Order.totalAmount</code> has no setter; it is recalculated by
+<code>calculateTotal()</code> every time an item is added, so it always matches the items.</li>
+<li><b>Unique e-mail.</b> <code>Store.addUser()</code> refuses a second user with the same e-mail, because e-mail is used to log in.</li>
+<li><b>InputHelper.</b> All <code>Scanner</code> input goes through this class, which repeats the question until the value is
+valid, so typing letters instead of a number does not throw an exception.</li>
+<li><b>ID generation.</b> The store generates IDs with counters (<code>nextUserId</code>, ...), so IDs are unique and the user
+does not need to type them.</li>
+</ul>
+
+<h3>5.6 Console menus</h3>
+<table>
+<tr><th>Main menu</th><th>Customer menu</th><th>Employee menu</th></tr>
+<tr><td>1. Login<br>2. Register as customer<br>3. Browse products (guest)<br>0. Exit</td>
+<td>1. List products<br>2. Add product to cart<br>3. View cart<br>4. Place order<br>5. View my orders<br>0. Logout</td>
+<td>1. List products<br>2. Add product<br>3. Restock product<br>4. List users<br>5. Add user<br>6. View all orders<br>0. Logout</td></tr>
+</table>
+
+<h2 class="newpage">6. How to Run and Sample Session</h2>
+<p>Open the project folder in IntelliJ IDEA (mark <code>src</code> as the sources root) and run <code>ecommerce.Main</code>,
+or from the command line:</p>
+<pre>javac -d out src/ecommerce/*.java src/ecommerce/*/*.java src/ecommerce/*/*/*.java
+java -cp out ecommerce.Main</pre>
+<p>Demo accounts loaded at start-up:</p>
+<table>
+<tr><th>Role</th><th>Email</th><th>Password</th></tr>
+<tr><td>Employee (Manager)</td><td>admin@shop.kz</td><td>admin123</td></tr>
+<tr><td>Customer</td><td>aida@mail.kz</td><td>1234</td></tr>
+<tr><td>Customer</td><td>dan@mail.kz</td><td>1234</td></tr>
+</table>
+<p>Part of a real session (customer lists products, adds a mouse and a laptop to the cart and places the order):</p>
+<pre>===== CUSTOMER MENU (Aida) =====
+1. List products
+2. Add product to cart
+3. View cart
+4. Place order
+5. View my orders
+0. Logout
+Choose: 1
+--- Products ---
+#1   Book         Clean Code                     12500,00 KZT  stock: 10   author: Robert C. Martin, 464 pages
+#3   Electronics  Wireless Mouse                  8900,00 KZT  stock: 20   brand: Logitech, warranty 12 months
+#5   Clothing     Hoodie                         18000,00 KZT  stock: 15   size: M, color: Black
+...
+Choose: 4
+Order placed successfully!
+==================================================
+ RECEIPT  -  Order #1
+ Date:     2026-10-29 23:02
+ Customer: Aida (aida@mail.kz)
+ Ship to:  Almaty, Abay Ave 10
+--------------------------------------------------
+ Wireless Mouse             2 x   8900,00 =   17800,00
+ Laptop 15&quot;                 1 x 420000,00 =  420000,00
+--------------------------------------------------
+ TOTAL:                              437800,00 KZT
+==================================================</pre>
+<p>Tested scenarios: login with wrong password; registration with an existing e-mail; entering letters instead of a number;
+adding more items than in stock (the program answers "Only 15 in stock."); placing an order with an empty cart;
+employee adding a new book and viewing all orders.</p>
+
+<h2>7. Conclusion</h2>
+<p>A working console e-commerce system was designed and implemented in Java. The requirement analysis produced ten
+classes in five packages. Two inheritance hierarchies (<code>User</code> &rarr; <code>Customer</code>/<code>Employee</code> and
+<code>Product</code> &rarr; <code>Book</code>/<code>Electronics</code>/<code>Clothing</code>) remove duplicated code and, together with
+abstract methods, give polymorphic behaviour when products and users are listed. Encapsulation with private fields and
+validating setters keeps every object in a valid state, and <code>ArrayList</code> collections store all data. Separating the
+model, the service (<code>Store</code>) and the user interface (<code>ConsoleApp</code>) keeps the code clear and easy to extend
+&mdash; for example, adding a new product category only requires one new subclass of <code>Product</code>.</p>
+<p>Possible improvements: saving data to files or a database, hashing passwords, searching/filtering products, and
+order statuses (paid, shipped, delivered).</p>
+
+<section class="annex">
+<h2>Annex A &mdash; Source Code</h2>
+<p>The complete source code of the project is included below.</p>
+<p>Project structure:</p>
+<pre>ECommerceSystem/
+└── src/ecommerce/
+    ├── Main.java
+    ├── model/
+    │   ├── user/     User.java, Customer.java, Employee.java
+    │   ├── product/  Product.java, Book.java, Electronics.java, Clothing.java
+    │   └── order/    Order.java, OrderItem.java
+    ├── service/      Store.java
+    └── ui/           ConsoleApp.java, InputHelper.java</pre>
+<h3>A.1 src/ecommerce/Main.java</h3><pre class="code">package ecommerce;
+
+import ecommerce.model.product.Book;
+import ecommerce.model.product.Clothing;
+import ecommerce.model.product.Electronics;
+import ecommerce.model.user.Customer;
+import ecommerce.model.user.Employee;
+import ecommerce.service.Store;
+import ecommerce.ui.ConsoleApp;
+import ecommerce.ui.InputHelper;
+
+import java.util.Scanner;
+
+/**
+ * Entry point. Creates the store, loads demo data and starts the console menu.
+ */
+public class Main {
+
+    public static void main(String[] args) {
+        Store store = new Store();
+        loadSampleData(store);
+
+        Scanner scanner = new Scanner(System.in);
+        ConsoleApp app = new ConsoleApp(store, new InputHelper(scanner));
+        app.run();
+        scanner.close();
+    }
+
+    /** Demo data so the application can be shown immediately. */
+    private static void loadSampleData(Store store) {
+        store.addUser(new Employee(store.generateUserId(), &quot;Admin&quot;, &quot;admin@shop.kz&quot;, &quot;admin123&quot;, &quot;Manager&quot;, 450000));
+        store.addUser(new Customer(store.generateUserId(), &quot;Aida&quot;, &quot;aida@mail.kz&quot;, &quot;1234&quot;, &quot;Almaty, Abay Ave 10&quot;));
+        store.addUser(new Customer(store.generateUserId(), &quot;Daniyar&quot;, &quot;dan@mail.kz&quot;, &quot;1234&quot;, &quot;Astana, Mangilik El 5&quot;));
+
+        store.addProduct(new Book(store.generateProductId(), &quot;Clean Code&quot;, 12500, 10, &quot;Robert C. Martin&quot;, 464));
+        store.addProduct(new Book(store.generateProductId(), &quot;Head First Java&quot;, 15000, 5, &quot;Kathy Sierra&quot;, 720));
+        store.addProduct(new Electronics(store.generateProductId(), &quot;Wireless Mouse&quot;, 8900, 20, &quot;Logitech&quot;, 12));
+        store.addProduct(new Electronics(store.generateProductId(), &quot;Laptop 15\&quot;&quot;, 420000, 3, &quot;Lenovo&quot;, 24));
+        store.addProduct(new Clothing(store.generateProductId(), &quot;Hoodie&quot;, 18000, 15, &quot;M&quot;, &quot;Black&quot;));
+        store.addProduct(new Clothing(store.generateProductId(), &quot;T-Shirt&quot;, 6500, 30, &quot;L&quot;, &quot;White&quot;));
+    }
+}
+</pre>
+<h3>A.2 src/ecommerce/model/user/User.java</h3><pre class="code">package ecommerce.model.user;
+
+/**
+ * Base class for every person who can log in to the system.
+ * It is abstract because a &quot;plain&quot; user never exists: every user is
+ * either a Customer or an Employee.
+ */
+public abstract class User {
+
+    private int userId;
+    private String name;
+    private String email;
+    private String password;
+    private String role;
+
+    protected User(int userId, String name, String email, String password, String role) {
+        this.userId = userId;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+
+    /** Compares the given password with the stored one (password is never exposed by a getter). */
+    public boolean checkPassword(String candidate) {
+        return password.equals(candidate);
+    }
+
+    /** Prints a one-line summary of the user. Subclasses add their own details. */
+    public void displayInfo() {
+        System.out.printf(&quot;#%-3d %-10s %-20s %-25s%s%n&quot;,
+                userId, role, name, email, getExtraInfo());
+    }
+
+    /** Hook for subclasses to append role-specific information to displayInfo(). */
+    protected abstract String getExtraInfo();
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+}
+</pre>
+<h3>A.3 src/ecommerce/model/user/Customer.java</h3><pre class="code">package ecommerce.model.user;
+
+/**
+ * A customer can browse products and place orders.
+ */
+public class Customer extends User {
+
+    private String shippingAddress;
+
+    public Customer(int userId, String name, String email, String password, String shippingAddress) {
+        super(userId, name, email, password, &quot;CUSTOMER&quot;);
+        this.shippingAddress = shippingAddress;
+    }
+
+    @Override
+    protected String getExtraInfo() {
+        return &quot;address: &quot; + shippingAddress;
+    }
+
+    public String getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(String shippingAddress) {
+        this.shippingAddress = shippingAddress;
+    }
+}
+</pre>
+<h3>A.4 src/ecommerce/model/user/Employee.java</h3><pre class="code">package ecommerce.model.user;
+
+/**
+ * An employee manages the store: adds products and users, restocks and views all orders.
+ */
+public class Employee extends User {
+
+    private String position;
+    private double salary;
+
+    public Employee(int userId, String name, String email, String password, String position, double salary) {
+        super(userId, name, email, password, &quot;EMPLOYEE&quot;);
+        this.position = position;
+        setSalary(salary);
+    }
+
+    @Override
+    protected String getExtraInfo() {
+        return &quot;position: &quot; + position;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+
+    public void setSalary(double salary) {
+        if (salary &lt; 0) {
+            throw new IllegalArgumentException(&quot;Salary cannot be negative&quot;);
+        }
+        this.salary = salary;
+    }
+}
+</pre>
+<h3>A.5 src/ecommerce/model/product/Product.java</h3><pre class="code">package ecommerce.model.product;
+
+/**
+ * Base class for everything the store sells.
+ * Abstract because every real product belongs to a category (Book, Electronics, Clothing).
+ */
+public abstract class Product {
+
+    private int id;
+    private String name;
+    private double price;
+    private int stockQuantity;
+
+    protected Product(int id, String name, double price, int stockQuantity) {
+        this.id = id;
+        this.name = name;
+        setPrice(price);
+        setStockQuantity(stockQuantity);
+    }
+
+    /** Prints the common product fields followed by the category-specific details. */
+    public void displayInfo() {
+        System.out.printf(&quot;#%-3d %-12s %-28s %10.2f KZT  stock: %-4d %s%n&quot;,
+                id, getCategory(), name, price, stockQuantity, getDetails());
+    }
+
+    /** Category name shown in listings, e.g. &quot;Book&quot;. */
+    public abstract String getCategory();
+
+    /** Category-specific attributes as text, e.g. &quot;author: ...&quot;. */
+    protected abstract String getDetails();
+
+    public boolean isInStock(int quantity) {
+        return quantity &gt; 0 &amp;&amp; quantity &lt;= stockQuantity;
+    }
+
+    /** Removes sold items from stock. Called only after isInStock() was checked. */
+    public void reduceStock(int quantity) {
+        if (!isInStock(quantity)) {
+            throw new IllegalArgumentException(&quot;Not enough stock for &quot; + name);
+        }
+        stockQuantity -= quantity;
+    }
+
+    public void increaseStock(int quantity) {
+        if (quantity &lt;= 0) {
+            throw new IllegalArgumentException(&quot;Quantity must be positive&quot;);
+        }
+        stockQuantity += quantity;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        if (price &lt; 0) {
+            throw new IllegalArgumentException(&quot;Price cannot be negative&quot;);
+        }
+        this.price = price;
+    }
+
+    public int getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(int stockQuantity) {
+        if (stockQuantity &lt; 0) {
+            throw new IllegalArgumentException(&quot;Stock cannot be negative&quot;);
+        }
+        this.stockQuantity = stockQuantity;
+    }
+}
+</pre>
+<h3>A.6 src/ecommerce/model/product/Book.java</h3><pre class="code">package ecommerce.model.product;
+
+public class Book extends Product {
+
+    private String author;
+    private int pages;
+
+    public Book(int id, String name, double price, int stockQuantity, String author, int pages) {
+        super(id, name, price, stockQuantity);
+        this.author = author;
+        this.pages = pages;
+    }
+
+    @Override
+    public String getCategory() {
+        return &quot;Book&quot;;
+    }
+
+    @Override
+    protected String getDetails() {
+        return &quot;author: &quot; + author + &quot;, &quot; + pages + &quot; pages&quot;;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public int getPages() {
+        return pages;
+    }
+
+    public void setPages(int pages) {
+        this.pages = pages;
+    }
+}
+</pre>
+<h3>A.7 src/ecommerce/model/product/Electronics.java</h3><pre class="code">package ecommerce.model.product;
+
+public class Electronics extends Product {
+
+    private String brand;
+    private int warrantyMonths;
+
+    public Electronics(int id, String name, double price, int stockQuantity, String brand, int warrantyMonths) {
+        super(id, name, price, stockQuantity);
+        this.brand = brand;
+        this.warrantyMonths = warrantyMonths;
+    }
+
+    @Override
+    public String getCategory() {
+        return &quot;Electronics&quot;;
+    }
+
+    @Override
+    protected String getDetails() {
+        return &quot;brand: &quot; + brand + &quot;, warranty &quot; + warrantyMonths + &quot; months&quot;;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public int getWarrantyMonths() {
+        return warrantyMonths;
+    }
+
+    public void setWarrantyMonths(int warrantyMonths) {
+        this.warrantyMonths = warrantyMonths;
+    }
+}
+</pre>
+<h3>A.8 src/ecommerce/model/product/Clothing.java</h3><pre class="code">package ecommerce.model.product;
+
+public class Clothing extends Product {
+
+    private String size;
+    private String color;
+
+    public Clothing(int id, String name, double price, int stockQuantity, String size, String color) {
+        super(id, name, price, stockQuantity);
+        this.size = size;
+        this.color = color;
+    }
+
+    @Override
+    public String getCategory() {
+        return &quot;Clothing&quot;;
+    }
+
+    @Override
+    protected String getDetails() {
+        return &quot;size: &quot; + size + &quot;, color: &quot; + color;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+}
+</pre>
+<h3>A.9 src/ecommerce/model/order/Order.java</h3><pre class="code">package ecommerce.model.order;
+
+import ecommerce.model.user.Customer;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * An order placed by one customer, containing one or more order items.
+ */
+public class Order {
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd HH:mm&quot;);
+
+    private int orderId;
+    private Customer customer;
+    private ArrayList&lt;OrderItem&gt; items;
+    private double totalAmount;
+    private LocalDateTime orderDate;
+
+    public Order(int orderId, Customer customer) {
+        this.orderId = orderId;
+        this.customer = customer;
+        this.items = new ArrayList&lt;&gt;();
+        this.totalAmount = 0;
+        this.orderDate = LocalDateTime.now();
+    }
+
+    public void addItem(OrderItem item) {
+        items.add(item);
+        calculateTotal();
+    }
+
+    /** Recalculates totalAmount from the items, so the total is always consistent. */
+    public double calculateTotal() {
+        double sum = 0;
+        for (OrderItem item : items) {
+            sum += item.getSubtotal();
+        }
+        totalAmount = sum;
+        return totalAmount;
+    }
+
+    public void printReceipt() {
+        System.out.println(&quot;==================================================&quot;);
+        System.out.println(&quot; RECEIPT  -  Order #&quot; + orderId);
+        System.out.println(&quot; Date:     &quot; + orderDate.format(DATE_FORMAT));
+        System.out.println(&quot; Customer: &quot; + customer.getName() + &quot; (&quot; + customer.getEmail() + &quot;)&quot;);
+        System.out.println(&quot; Ship to:  &quot; + customer.getShippingAddress());
+        System.out.println(&quot;--------------------------------------------------&quot;);
+        for (OrderItem item : items) {
+            System.out.printf(&quot; %-24s %3d x %9.2f = %10.2f%n&quot;,
+                    item.getProduct().getName(), item.getQuantity(),
+                    item.getUnitPrice(), item.getSubtotal());
+        }
+        System.out.println(&quot;--------------------------------------------------&quot;);
+        System.out.printf(&quot; TOTAL: %38.2f KZT%n&quot;, totalAmount);
+        System.out.println(&quot;==================================================&quot;);
+    }
+
+    public int getOrderId() {
+        return orderId;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    /** Returns a copy so callers cannot modify the order&#x27;s items directly. */
+    public List&lt;OrderItem&gt; getItems() {
+        return new ArrayList&lt;&gt;(items);
+    }
+
+    public double getTotalAmount() {
+        return totalAmount;
+    }
+
+    public LocalDateTime getOrderDate() {
+        return orderDate;
+    }
+}
+</pre>
+<h3>A.10 src/ecommerce/model/order/OrderItem.java</h3><pre class="code">package ecommerce.model.order;
+
+import ecommerce.model.product.Product;
+
+/**
+ * One line of an order: a product and how many units were bought.
+ * The unit price is copied at purchase time so later price changes
+ * do not change old receipts.
+ */
+public class OrderItem {
+
+    private Product product;
+    private int quantity;
+    private double unitPrice;
+
+    public OrderItem(Product product, int quantity) {
+        this.product = product;
+        this.quantity = quantity;
+        this.unitPrice = product.getPrice();
+    }
+
+    public double getSubtotal() {
+        return unitPrice * quantity;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public double getUnitPrice() {
+        return unitPrice;
+    }
+}
+</pre>
+<h3>A.11 src/ecommerce/service/Store.java</h3><pre class="code">package ecommerce.service;
+
+import ecommerce.model.order.Order;
+import ecommerce.model.order.OrderItem;
+import ecommerce.model.product.Product;
+import ecommerce.model.user.Customer;
+import ecommerce.model.user.User;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Holds all data of the shop in ArrayLists and contains the business rules
+ * (login, adding users/products, placing orders). The console UI only talks to this class.
+ */
+public class Store {
+
+    private ArrayList&lt;User&gt; users = new ArrayList&lt;&gt;();
+    private ArrayList&lt;Product&gt; products = new ArrayList&lt;&gt;();
+    private ArrayList&lt;Order&gt; orders = new ArrayList&lt;&gt;();
+
+    private int nextUserId = 1;
+    private int nextProductId = 1;
+    private int nextOrderId = 1;
+
+    // ---------- ID generation ----------
+
+    public int generateUserId() {
+        return nextUserId++;
+    }
+
+    public int generateProductId() {
+        return nextProductId++;
+    }
+
+    // ---------- Users ----------
+
+    public void addUser(User user) {
+        if (findUserByEmail(user.getEmail()) != null) {
+            throw new IllegalArgumentException(&quot;A user with email &quot; + user.getEmail() + &quot; already exists&quot;);
+        }
+        users.add(user);
+    }
+
+    public User findUserByEmail(String email) {
+        for (User user : users) {
+            if (user.getEmail().equalsIgnoreCase(email)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    /** Returns the matching user, or null if the email/password is wrong. */
+    public User login(String email, String password) {
+        User user = findUserByEmail(email);
+        if (user != null &amp;&amp; user.checkPassword(password)) {
+            return user;
+        }
+        return null;
+    }
+
+    public List&lt;User&gt; getUsers() {
+        return new ArrayList&lt;&gt;(users);
+    }
+
+    // ---------- Products ----------
+
+    public void addProduct(Product product) {
+        products.add(product);
+    }
+
+    public Product findProductById(int id) {
+        for (Product product : products) {
+            if (product.getId() == id) {
+                return product;
+            }
+        }
+        return null;
+    }
+
+    public List&lt;Product&gt; getProducts() {
+        return new ArrayList&lt;&gt;(products);
+    }
+
+    // ---------- Orders ----------
+
+    /**
+     * Creates an order from the customer&#x27;s cart.
+     * Stock is checked for every item first, so either the whole order succeeds or nothing changes.
+     */
+    public Order placeOrder(Customer customer, List&lt;OrderItem&gt; cart) {
+        if (cart.isEmpty()) {
+            throw new IllegalArgumentException(&quot;Cart is empty&quot;);
+        }
+        for (OrderItem item : cart) {
+            if (!item.getProduct().isInStock(item.getQuantity())) {
+                throw new IllegalArgumentException(&quot;Not enough stock for &quot; + item.getProduct().getName()
+                        + &quot; (available: &quot; + item.getProduct().getStockQuantity() + &quot;)&quot;);
+            }
+        }
+
+        Order order = new Order(nextOrderId++, customer);
+        for (OrderItem item : cart) {
+            item.getProduct().reduceStock(item.getQuantity());
+            order.addItem(item);
+        }
+        orders.add(order);
+        return order;
+    }
+
+    public List&lt;Order&gt; getOrders() {
+        return new ArrayList&lt;&gt;(orders);
+    }
+
+    public List&lt;Order&gt; getOrdersByCustomer(Customer customer) {
+        List&lt;Order&gt; result = new ArrayList&lt;&gt;();
+        for (Order order : orders) {
+            if (order.getCustomer() == customer) {
+                result.add(order);
+            }
+        }
+        return result;
+    }
+}
+</pre>
+<h3>A.12 src/ecommerce/ui/InputHelper.java</h3><pre class="code">package ecommerce.ui;
+
+import java.util.Scanner;
+
+/**
+ * Small wrapper around Scanner that keeps asking until the input is valid,
+ * so a typo never crashes the program.
+ */
+public class InputHelper {
+
+    private Scanner scanner;
+
+    public InputHelper(Scanner scanner) {
+        this.scanner = scanner;
+    }
+
+    public String readLine(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextLine().trim();
+    }
+
+    public String readNonEmpty(String prompt) {
+        while (true) {
+            String value = readLine(prompt);
+            if (!value.isEmpty()) {
+                return value;
+            }
+            System.out.println(&quot;  Value cannot be empty.&quot;);
+        }
+    }
+
+    public int readInt(String prompt) {
+        while (true) {
+            String value = readLine(prompt);
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                System.out.println(&quot;  Please enter a whole number.&quot;);
+            }
+        }
+    }
+
+    public int readPositiveInt(String prompt) {
+        while (true) {
+            int value = readInt(prompt);
+            if (value &gt; 0) {
+                return value;
+            }
+            System.out.println(&quot;  Number must be greater than 0.&quot;);
+        }
+    }
+
+    public double readNonNegativeDouble(String prompt) {
+        while (true) {
+            String value = readLine(prompt);
+            try {
+                double number = Double.parseDouble(value);
+                if (number &gt;= 0) {
+                    return number;
+                }
+                System.out.println(&quot;  Number cannot be negative.&quot;);
+            } catch (NumberFormatException e) {
+                System.out.println(&quot;  Please enter a number (e.g. 1500 or 99.90).&quot;);
+            }
+        }
+    }
+}
+</pre>
+<h3>A.13 src/ecommerce/ui/ConsoleApp.java</h3><pre class="code">package ecommerce.ui;
+
+import ecommerce.model.order.Order;
+import ecommerce.model.order.OrderItem;
+import ecommerce.model.product.Book;
+import ecommerce.model.product.Clothing;
+import ecommerce.model.product.Electronics;
+import ecommerce.model.product.Product;
+import ecommerce.model.user.Customer;
+import ecommerce.model.user.Employee;
+import ecommerce.model.user.User;
+import ecommerce.service.Store;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Console user interface: main menu, customer menu and employee menu.
+ * All data operations are delegated to the Store.
+ */
+public class ConsoleApp {
+
+    private Store store;
+    private InputHelper input;
+
+    public ConsoleApp(Store store, InputHelper input) {
+        this.store = store;
+        this.input = input;
+    }
+
+    public void run() {
+        System.out.println(&quot;Welcome to the Console E-Commerce System!&quot;);
+        boolean running = true;
+        while (running) {
+            System.out.println();
+            System.out.println(&quot;===== MAIN MENU =====&quot;);
+            System.out.println(&quot;1. Login&quot;);
+            System.out.println(&quot;2. Register as customer&quot;);
+            System.out.println(&quot;3. Browse products (guest)&quot;);
+            System.out.println(&quot;0. Exit&quot;);
+            int choice = input.readInt(&quot;Choose: &quot;);
+            switch (choice) {
+                case 1:
+                    login();
+                    break;
+                case 2:
+                    registerCustomer();
+                    break;
+                case 3:
+                    listProducts();
+                    break;
+                case 0:
+                    running = false;
+                    break;
+                default:
+                    System.out.println(&quot;Unknown option.&quot;);
+            }
+        }
+        System.out.println(&quot;Goodbye!&quot;);
+    }
+
+    private void login() {
+        String email = input.readNonEmpty(&quot;Email: &quot;);
+        String password = input.readNonEmpty(&quot;Password: &quot;);
+        User user = store.login(email, password);
+        if (user == null) {
+            System.out.println(&quot;Wrong email or password.&quot;);
+            return;
+        }
+        System.out.println(&quot;Hello, &quot; + user.getName() + &quot;! You are logged in as &quot; + user.getRole() + &quot;.&quot;);
+        // The menu depends on the real (runtime) type of the user object.
+        if (user instanceof Employee) {
+            employeeMenu((Employee) user);
+        } else if (user instanceof Customer) {
+            customerMenu((Customer) user);
+        }
+    }
+
+    private void registerCustomer() {
+        try {
+            store.addUser(readNewCustomer());
+            System.out.println(&quot;Registration successful. You can now log in.&quot;);
+        } catch (IllegalArgumentException e) {
+            System.out.println(&quot;Error: &quot; + e.getMessage());
+        }
+    }
+
+    // ===================== CUSTOMER MENU =====================
+
+    private void customerMenu(Customer customer) {
+        List&lt;OrderItem&gt; cart = new ArrayList&lt;&gt;();
+        boolean loggedIn = true;
+        while (loggedIn) {
+            System.out.println();
+            System.out.println(&quot;===== CUSTOMER MENU (&quot; + customer.getName() + &quot;) =====&quot;);
+            System.out.println(&quot;1. List products&quot;);
+            System.out.println(&quot;2. Add product to cart&quot;);
+            System.out.println(&quot;3. View cart&quot;);
+            System.out.println(&quot;4. Place order&quot;);
+            System.out.println(&quot;5. View my orders&quot;);
+            System.out.println(&quot;0. Logout&quot;);
+            int choice = input.readInt(&quot;Choose: &quot;);
+            switch (choice) {
+                case 1:
+                    listProducts();
+                    break;
+                case 2:
+                    addToCart(cart);
+                    break;
+                case 3:
+                    viewCart(cart);
+                    break;
+                case 4:
+                    placeOrder(customer, cart);
+                    break;
+                case 5:
+                    printOrders(store.getOrdersByCustomer(customer));
+                    break;
+                case 0:
+                    loggedIn = false;
+                    break;
+                default:
+                    System.out.println(&quot;Unknown option.&quot;);
+            }
+        }
+    }
+
+    private void addToCart(List&lt;OrderItem&gt; cart) {
+        listProducts();
+        int id = input.readInt(&quot;Product ID: &quot;);
+        Product product = store.findProductById(id);
+        if (product == null) {
+            System.out.println(&quot;No product with ID &quot; + id + &quot;.&quot;);
+            return;
+        }
+        int quantity = input.readPositiveInt(&quot;Quantity: &quot;);
+
+        // If the product is already in the cart, increase its quantity instead of adding a second line.
+        OrderItem existing = null;
+        for (OrderItem item : cart) {
+            if (item.getProduct() == product) {
+                existing = item;
+            }
+        }
+        int newQuantity = (existing == null) ? quantity : existing.getQuantity() + quantity;
+        if (!product.isInStock(newQuantity)) {
+            System.out.println(&quot;Only &quot; + product.getStockQuantity() + &quot; in stock.&quot;);
+            return;
+        }
+        if (existing == null) {
+            cart.add(new OrderItem(product, quantity));
+        } else {
+            existing.setQuantity(newQuantity);
+        }
+        System.out.println(&quot;Added &quot; + quantity + &quot; x &quot; + product.getName() + &quot; to cart.&quot;);
+    }
+
+    private void viewCart(List&lt;OrderItem&gt; cart) {
+        if (cart.isEmpty()) {
+            System.out.println(&quot;Your cart is empty.&quot;);
+            return;
+        }
+        double total = 0;
+        System.out.println(&quot;--- Cart ---&quot;);
+        for (OrderItem item : cart) {
+            System.out.printf(&quot; %-24s %3d x %9.2f = %10.2f%n&quot;,
+                    item.getProduct().getName(), item.getQuantity(),
+                    item.getUnitPrice(), item.getSubtotal());
+            total += item.getSubtotal();
+        }
+        System.out.printf(&quot; Total: %.2f KZT%n&quot;, total);
+    }
+
+    private void placeOrder(Customer customer, List&lt;OrderItem&gt; cart) {
+        try {
+            Order order = store.placeOrder(customer, cart);
+            System.out.println(&quot;Order placed successfully!&quot;);
+            order.printReceipt();
+            cart.clear();
+        } catch (IllegalArgumentException e) {
+            System.out.println(&quot;Could not place order: &quot; + e.getMessage());
+        }
+    }
+
+    // ===================== EMPLOYEE MENU =====================
+
+    private void employeeMenu(Employee employee) {
+        boolean loggedIn = true;
+        while (loggedIn) {
+            System.out.println();
+            System.out.println(&quot;===== EMPLOYEE MENU (&quot; + employee.getName() + &quot;, &quot; + employee.getPosition() + &quot;) =====&quot;);
+            System.out.println(&quot;1. List products&quot;);
+            System.out.println(&quot;2. Add product&quot;);
+            System.out.println(&quot;3. Restock product&quot;);
+            System.out.println(&quot;4. List users&quot;);
+            System.out.println(&quot;5. Add user&quot;);
+            System.out.println(&quot;6. View all orders&quot;);
+            System.out.println(&quot;0. Logout&quot;);
+            int choice = input.readInt(&quot;Choose: &quot;);
+            switch (choice) {
+                case 1:
+                    listProducts();
+                    break;
+                case 2:
+                    addProduct();
+                    break;
+                case 3:
+                    restockProduct();
+                    break;
+                case 4:
+                    listUsers();
+                    break;
+                case 5:
+                    addUser();
+                    break;
+                case 6:
+                    printOrders(store.getOrders());
+                    break;
+                case 0:
+                    loggedIn = false;
+                    break;
+                default:
+                    System.out.println(&quot;Unknown option.&quot;);
+            }
+        }
+    }
+
+    private void addProduct() {
+        System.out.println(&quot;Product type: 1. Book  2. Electronics  3. Clothing&quot;);
+        int type = input.readInt(&quot;Choose: &quot;);
+        if (type &lt; 1 || type &gt; 3) {
+            System.out.println(&quot;Unknown product type.&quot;);
+            return;
+        }
+        String name = input.readNonEmpty(&quot;Name: &quot;);
+        double price = input.readNonNegativeDouble(&quot;Price (KZT): &quot;);
+        int stock = input.readPositiveInt(&quot;Stock quantity: &quot;);
+        int id = store.generateProductId();
+
+        Product product;
+        if (type == 1) {
+            String author = input.readNonEmpty(&quot;Author: &quot;);
+            int pages = input.readPositiveInt(&quot;Pages: &quot;);
+            product = new Book(id, name, price, stock, author, pages);
+        } else if (type == 2) {
+            String brand = input.readNonEmpty(&quot;Brand: &quot;);
+            int warranty = input.readPositiveInt(&quot;Warranty (months): &quot;);
+            product = new Electronics(id, name, price, stock, brand, warranty);
+        } else {
+            String size = input.readNonEmpty(&quot;Size: &quot;);
+            String color = input.readNonEmpty(&quot;Color: &quot;);
+            product = new Clothing(id, name, price, stock, size, color);
+        }
+        store.addProduct(product);
+        System.out.println(&quot;Product added:&quot;);
+        product.displayInfo();
+    }
+
+    private void restockProduct() {
+        listProducts();
+        int id = input.readInt(&quot;Product ID: &quot;);
+        Product product = store.findProductById(id);
+        if (product == null) {
+            System.out.println(&quot;No product with ID &quot; + id + &quot;.&quot;);
+            return;
+        }
+        int quantity = input.readPositiveInt(&quot;Quantity to add: &quot;);
+        product.increaseStock(quantity);
+        System.out.println(&quot;New stock for &quot; + product.getName() + &quot;: &quot; + product.getStockQuantity());
+    }
+
+    private void addUser() {
+        System.out.println(&quot;User type: 1. Customer  2. Employee&quot;);
+        int type = input.readInt(&quot;Choose: &quot;);
+        try {
+            if (type == 1) {
+                store.addUser(readNewCustomer());
+            } else if (type == 2) {
+                String name = input.readNonEmpty(&quot;Name: &quot;);
+                String email = input.readNonEmpty(&quot;Email: &quot;);
+                String password = input.readNonEmpty(&quot;Password: &quot;);
+                String position = input.readNonEmpty(&quot;Position: &quot;);
+                double salary = input.readNonNegativeDouble(&quot;Salary (KZT): &quot;);
+                store.addUser(new Employee(store.generateUserId(), name, email, password, position, salary));
+            } else {
+                System.out.println(&quot;Unknown user type.&quot;);
+                return;
+            }
+            System.out.println(&quot;User added.&quot;);
+        } catch (IllegalArgumentException e) {
+            System.out.println(&quot;Error: &quot; + e.getMessage());
+        }
+    }
+
+    // ===================== SHARED HELPERS =====================
+
+    private Customer readNewCustomer() {
+        String name = input.readNonEmpty(&quot;Name: &quot;);
+        String email = input.readNonEmpty(&quot;Email: &quot;);
+        String password = input.readNonEmpty(&quot;Password: &quot;);
+        String address = input.readNonEmpty(&quot;Shipping address: &quot;);
+        return new Customer(store.generateUserId(), name, email, password, address);
+    }
+
+    private void listProducts() {
+        List&lt;Product&gt; products = store.getProducts();
+        if (products.isEmpty()) {
+            System.out.println(&quot;No products available.&quot;);
+            return;
+        }
+        System.out.println(&quot;--- Products ---&quot;);
+        for (Product product : products) {
+            product.displayInfo(); // polymorphism: each subclass supplies its own details
+        }
+    }
+
+    private void listUsers() {
+        System.out.println(&quot;--- Users ---&quot;);
+        for (User user : store.getUsers()) {
+            user.displayInfo();
+        }
+    }
+
+    private void printOrders(List&lt;Order&gt; orders) {
+        if (orders.isEmpty()) {
+            System.out.println(&quot;No orders yet.&quot;);
+            return;
+        }
+        for (Order order : orders) {
+            order.printReceipt();
+        }
+    }
+}
+</pre>
+</section>
+</body></html>

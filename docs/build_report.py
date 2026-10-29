@@ -7,6 +7,7 @@ import pathlib
 
 STUDENT_NAME = "Madiyar Seilkhan"
 COURSE_NAME = "ICT"
+GIT_URL = "https://github.com/madiyaka/ECommerceSystem"
 SUBMISSION_DATE = "29 October 2026"
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -87,9 +88,9 @@ pre.code {{ break-inside: auto; }}
 .cover {{ height: 245mm; display: flex; flex-direction: column; justify-content: center; text-align: center; break-after: page; }}
 .cover .title {{ font-size: 26pt; font-weight: bold; color: #1e3a8a; margin-bottom: 10px; }}
 .cover .sub {{ font-size: 14pt; color: #374151; margin-bottom: 60px; }}
-.cover table {{ width: 60%; margin: 0 auto; font-size: 12pt; }}
+.cover table {{ width: 85%; margin: 0 auto; font-size: 12pt; }}
 .cover td {{ border: none; padding: 6px; }}
-.cover td:first-child {{ font-weight: bold; text-align: right; width: 45%; }}
+.cover td:first-child {{ font-weight: bold; text-align: right; width: 38%; white-space: nowrap; }}
 .toc li {{ margin: 2px 0; }}
 .uml {{ page: wide; break-before: page; break-after: page; text-align: center; }}
 .uml svg {{ width: 100%; height: auto; max-height: 265mm; }}
@@ -104,6 +105,7 @@ pre.code {{ break-inside: auto; }}
     <tr><td>Student name:</td><td>{STUDENT_NAME}</td></tr>
     <tr><td>Course:</td><td>{COURSE_NAME}</td></tr>
     <tr><td>Date of submission:</td><td>{SUBMISSION_DATE}</td></tr>
+    <tr><td>Git repository:</td><td>{html.escape(GIT_URL)}</td></tr>
   </table>
 </section>
 
@@ -294,7 +296,8 @@ order statuses (paid, shipped, delivered).</p>
 
 <section class="annex">
 <h2>Annex A &mdash; Source Code</h2>
-<p>The complete source code of the project is included below.</p>
+<p>Git repository: <b>{html.escape(GIT_URL)}</b></p>
+<p>The complete source code of the project is also included below.</p>
 <p>Project structure:</p>
 <pre>ECommerceSystem/
 └── src/ecommerce/
